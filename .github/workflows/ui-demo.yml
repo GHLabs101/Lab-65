@@ -1,0 +1,44 @@
+name: UI Demo
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start (grouped)
+        run: |
+          echo "::group::Setup phase"
+          echo "Preparing workspace…"
+          echo "Installing demo tools… (nothing to install)"
+          echo "::endgroup::"
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Emit annotations
+        run: |
+          echo "::warning file=README.md,line=1,col=1::This is a demo warning"
+          echo "::error file=app.py,line=42,col=7::This is a demo error (non-fatal here)"
+          echo "Continuing after annotations to keep the job green."
+
+  package:
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    steps:
+      - name: Create output
+        run: |
+          mkdir -p out
+          date > out/report.txt
+          echo "Hello from artifact" >> out/report.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-output
+          path: out/
+          if-no-files-found: error
+          # retention-days: 7  # (optional) override per-artifact retention
